@@ -5,4 +5,4 @@ Here are the slides, data and exercises for a 3 hour short course in Statistical
 
 The slides are in [shape-course-ild.pdf](./shape-course-ild.pdf)
 
-The R Markdown for the exercise is in: shape-course-r-exercises-ild.Rmd
+The R Markdown for the exercise is in [shape-course-r-exercises-ild.Rmd](./shape-course-r-exercises-ild.Rmd)
