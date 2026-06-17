@@ -1,0 +1,349 @@
+---
+title: 'R Exercises: Statistical Shape Analysis'
+author: "Ian Dryden"
+subtitle: Complex Data School, June 24-25, Seoul, Korea
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '2'
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+---
+
+```{r chunk 1, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+# Notes
+
+This document contains the R exercise code for the short course on Shape Analysis. 
+
+Several exercises require the R packages `shapes` and `fdasrvf`.
+
+# R Exercise 1: Bookstein shape co-ordinates
+
+Compute and explore Bookstein shape coordinates for the mouse landmark data.
+
+```{r chunk 2}
+library("shapes")
+data(mice)
+u<-bookstein2d( mice$x )$bshpv
+plotshapes( u , col=as.double(mice$group) , symbol=1:6)
+legend("topright",c("control","large","small"),pch=1,col=c(1,2,3))
+```
+
+# R Exercise 1: Bookstein shape co-ordinates — part 2
+
+Compute and explore Bookstein shape coordinates for the mouse landmark data.
+
+```{r chunk 3}
+ub <- t(u[3:6,1,]) ; vb <- t(u[3:6,2,])
+pairs( cbind( centroid.size( mice$x), ub, vb) ,
+  labels=c("S","u3","u4","u5","u6","v3","v4","v5","v6"), 
+     col=as.double(mice$group) )
+```
+
+# R Exercise 2: Procrustes shape distance
+
+Work through pairwise Procrustes alignment and compare the manual calculation with package functions.
+
+```{r chunk 4}
+centre <- function(X) scale(X, scale = FALSE)
+csize  <- function(X) sqrt(sum(centre(X)^2))
+preshape <- function(X) centre(X) / csize(X)
+X <- mice$x[,,1]
+Y <- mice$x[,,31]
+X0 <- preshape(X)
+Y0 <- preshape(Y)
+sv <- svd(t(X0) %*% Y0)
+R  <- sv$v %*% t(sv$u)
+R
+Y_aligned <- Y0 %*% R
+dP <- sqrt(sum((X0 - Y_aligned)^2))
+dP
+print( sqrt( 2*(1-cos( riemdist( X,Y) ) )))   #check
+print( riemdist( X,Y) )                           # similar
+```
+
+# R Exercise 3: Pairwise Procrustes Fit 
+
+Work through pairwise Procrustes alignment and compare the manual calculation with package functions.
+
+```{r chunk 5}
+X <- mice$x[,,1]
+Y <- mice$x[,,31]
+outline <- c(1,6,2,3,4,5,1)
+plotshapes( abind( X, Y)  , joinline=outline )
+
+#match Y to X, without scaling
+opa1 <- procOPA( X, Y, scale=FALSE)
+opa1
+plotshapes( abind( opa1$Ahat , opa1$Bhat) , joinline=outline )
+
+#match Y to X, with scaling
+opa2 <- procOPA( X, Y, scale=TRUE) 
+opa2
+plotshapes( abind( opa2$Ahat , opa2$Bhat) , joinline=outline )
+```
+
+# R Exercise 4: GPA with the shapes package
+
+Use Generalized Procrustes Analysis to align configurations and estimate a mean shape.
+
+```{r chunk 6}
+data(mice)
+# mice$x is k x m x n landmark array
+gpa <- procGPA(mice$x, scale=TRUE)
+aligned <- gpa$rotated.  # aligned configurations
+mean_shape <- gpa$mshape   # mean shape
+
+plotshapes(gpa$rotated)
+lines( mean_shape[c(1,6,2,3,4,5,1),], col=2)
+
+#Some DNA data 
+data(dna.dat)
+proc <- procGPA( dna.dat , scale=FALSE)
+shapes3d( proc$rotated )
+```
+
+# R Exercise 5: Digit 3 data in R
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 7}
+library(shapes)  #  load the `shapes' package (may need installing)
+digit3.dat[,,1:2]           #  Will print out the coordinates of the digit3 data
+plotshapes(digit3.dat)  # all 30 observations - what a mess!
+plotshapes(digit3.dat,joinline=1:13)  # a bit less of a mess
+```
+
+# R Exercise 5: Digit 3 data in R — part 2
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 8}
+out <- procGPA( digit3.dat , scale = TRUE) 
+out$rotated[,,1:2]     # contains the Procrustes registered data
+plotshapes ( out$rotated , joinline=c(1:13) )   # Procrustes registered data
+out$mshape    # contains the Procrustes mean shape
+lines( out$mshape, col=2 )  # adds the mean shape to the plot (in red)
+plot( out$size , out$rho )  
+```
+
+# R Exercise 5: Digit 3 (continued)
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 9}
+plot( out$size , out$rho)
+text( out$size , out$rho , c(1:30) )
+```
+
+# R Exercise 5: Digit 3 (continued)
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 10}
+plotshapes( digit3.dat , digit3.dat[,,1] , joinline= 1:13)
+out2 <- procGPA( digit3.dat[-1,,]  , scale = TRUE)   #Procrustes w/o the outlier
+plot( out2$size , out2$rho)
+text( out2$size , out2$rho , c(2:30) )
+```
+
+# R Exercise 6: Digit 3 outlier
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 11}
+out<-procGPA( digit3.dat ) 
+shapepca(out,type="r",mag=1,joinline=1:13)  # plot the effects of the first 3 PCs 
+shapepca(out,type="v",mag=1)
+shapepca(out,type="g",mag=1)
+```
+
+# R Exercise 6: Digit 3 outlier — part 2
+
+Inspect, register, and analyse the digit 3 landmark data, including the effect of an outlier.
+
+```{r chunk 12}
+plot(out$rho)
+out2<-procGPA( digit3.dat[-1,,] )      # without outlier 
+shapepca(out2,type="r",mag=1)  # plot the effects of the first 3 PCs 
+shapepca(out2,type="v",mag=1)
+shapepca(out2,type="g",mag=1)
+```
+
+# R Exercise 7: T2 mice - three groups
+
+Analyse the three mouse groups after GPA and compare tangent-coordinate choices.
+
+```{r chunk 13}
+data(mice)
+gpa <- procGPA(mice$x)
+shapepca(gpa,type="r",mag=3)
+shapepca(gpa,type="v",mag=3)
+shapepca(gpa,type="g",mag=3)
+plot(gpa$scores,col=as.factor(mice$group),pch=as.character(mice$group))
+gpa2 <- procGPA(mice$x,tangentcoords="expomap")
+plot(gpa2$scores,col=as.factor(mice$group),pch=as.character(mice$group))
+```
+
+# R Exercise 8: 3D Monkey skulls
+
+Read and analyse the 3D monkey skull data; this requires the external file `monkey.csv`.
+
+```{r chunk 14}
+tem <- read.csv("monkey.csv") 
+tem<-as.matrix(tem)
+dim(tem) #Note the first column has a landmark label (number) in it. 
+tem1 <- tem[,2:58]
+monk <- array(tem1, c(7, 3, 19) )
+```
+
+# R Exercise 8: 3D Monkey skulls — part 2
+
+Read and analyse the 3D monkey skull data; this requires the external file `monkey.csv`.
+
+```{r chunk 15}
+library(shapes)
+ans <- procGPA( monk)
+ans$percent
+plot(ans$rho)
+shapepca( ans )
+```
+
+# R Exercise 8 (continued)
+
+Run this chunk after loading any required data and packages.
+
+```{r chunk 16}
+ans2 <- pnss3d( monk , n.pc=10, sphere.type="small")
+ans2$percent
+out <- plot3darcs( ans2, pcno=1, c=3)
+```
+
+# R Exercise 8 (continued)
+
+Run this chunk after loading any required data and packages.
+
+```{r chunk 17}
+ans3 <- pnss3d( monk[,,-19] , n.pc=10, sphere.type="small")
+out <- plot3darcs( ans3, pcno=1, c=3)
+```
+
+# R Exercise 9: DNA
+
+Apply PCA and principal nested spheres-style analysis to the DNA dataset.
+
+```{r chunk 18}
+data(dna.dat)
+proc <- procGPA( dna.dat )
+proc$percent
+shapepca(proc)
+
+ans <- pnss3d( dna.dat , n.pc=10, sphere.type="BIC")
+ans$percent
+temp <- plot3darcs(ans, pcno=1, c=2)
+```
+
+# R Exercise 10: Peptides
+
+Analyse peptide configurations; this requires the external file `peptide.Rda`.
+
+```{r chunk 19}
+load("peptide.Rda")
+proc <- procGPA( z1 )
+proc$percent
+shapepca(proc)
+plot(proc$scores[,1],proc$scores[,2])
+```
+
+# R Exercise 10: Peptides — part 2
+
+Analyse peptide configurations; this requires the external file `peptide.Rda`.
+
+```{r chunk 20}
+ans <- pnss3d( z1 , n.pc=10, sphere.type="BIC")
+ans$percent
+plot(ans$PNS$scores[,1],ans$PNS$scores[,2])
+lines(ans$PNS$scores[,1],ans$PNS$scores[,2],col=1:100)
+tem <- plot3darcs(ans, pcno=1, c=1, type="pnss")
+#compare to PCA
+tem2 <-plot3darcs(ans, pcno=1, c=1, type="pca")
+```
+
+# R Exercise 11: permutation test
+
+Compare mean shapes between mouse groups using permutation and resampling tests.
+
+```{r chunk 21}
+mlarge <- mice$x[,,mice$group=="l"]
+msmall <- mice$x[,,mice$group=="s"]
+testmeanshapes( mlarge, msmall )
+resampletest( mlarge, msmall )
+mcontrol <- mice$x[,,mice$group=="c"]
+testmeanshapes( mlarge, mcontrol )
+resampletest( mlarge, mcontrol )
+```
+
+# R Exercise 12: Fisher-Rao growth velocity data
+
+Analyse growth velocity curves using Fisher–Rao registration and functional PCA tools.
+
+```{r chunk 22}
+library("fdasrvf")
+data(growth_vel)
+n<-93
+palette(rainbow(n+10))
+plot(growth_vel$time,growth_vel$f[,1],ylim=c(-2,30),type="n",ylab="f")
+for (i in 1:n){
+lines(growth_vel$time,growth_vel$f[,i],col=n+10-i)
+}
+out <- time_warping( growth_vel$f, growth_vel$time)
+plot(growth_vel$time,growth_vel$f[,1],ylim=c(-2,30),type="n",ylab="f")
+for (i in 1:n){
+lines(growth_vel$time,out$fn[,i],col=n+10-i)
+}
+```
+
+# R Exercise 12: Fisher-Rao growth velocity (continued)
+
+Analyse growth velocity curves using Fisher–Rao registration and functional PCA tools.
+
+```{r chunk 23}
+hfpca <- horizFPCA(out, no = 3)
+vfpca <- vertFPCA(out, no = 3)
+jfpca <- jointFPCA(out, no = 3)
+```
+
+
+# R Exercise 13: Statistical shape analysis of six groups DNA data
+
+This R code reads in the data from 12 groups of DNA molecular dynamics simulations 
+(undamaged XGX and damaged XFX) and then calculates a few simple summaries from the 
+thinned AFA group. 
+
+```{r chunk 24}
+library(shapes)
+afa<-read.in("./DNA/AFA_P.x",22,3) ; afc<-read.in("./DNA/AFC_P.x",22,3) 
+afg<-read.in("./DNA/AFG_P.x",22,3) ; aga<-read.in("./DNA/AGA_P.x",22,3)  
+agc<-read.in("./DNA/AGC_P.x",22,3) ; agg<-read.in("./DNA/AGG_P.x",22,3)
+tfa<-read.in("./DNA/TFA_P.x",22,3) ; tfc<-read.in("./DNA/TFC_P.x",22,3) 
+tft<-read.in("./DNA/TFT_P.x",22,3) ; tga<-read.in("./DNA/TGA_P.x",22,3) 
+tgc<-read.in("./DNA/TGC_P.x",22,3) ; tgt<-read.in("./DNA/TGT_P.x",22,3)
+
+ans<-procGPA(afa,scale=FALSE) #investigate AFA group
+shapes3d(ans$rotated)
+plot(ans$rho) #shape distances `rho' from the mean shape
+plot(ans$size) #size
+ts.plot(ans$size) # time series plot
+acf(ans$size)
+pacf(ans$size)
+```
