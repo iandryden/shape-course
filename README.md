@@ -14,6 +14,6 @@ Please also install the R package shapes. You can do this by running the followi
 
 The slides are in [shape-course-ild.pdf](./shape-course-ild.pdf)
 
-The R Markdown for the exercises is in [shape-course-r-exercises-ild.Rmd](./shape-course-r-exercises-ild.Rmd)
+The R Markdown for the exercises is in [shape-course-r-exercises-ild.Rmd](./shape-course-r-exercises-ild.Rmd) We will run the code together and discuss the results during the class. 
 
 The other files/directory are datasets that should be in the same directory on your local machine as the .Rmd file. 
