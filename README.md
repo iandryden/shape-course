@@ -1,5 +1,6 @@
 # shape-course
-Short course
+
+*Short course*
 
 Here are the slides, data and exercises for a 2 x 1.5 hour short course in Statistical Shape Analysis.
 
